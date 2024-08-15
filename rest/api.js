@@ -55,8 +55,6 @@ router.post('/verifyUser', function (req, res, next) {
         .then(usuario => {
             if (usuario) {
                 res.json(usuario);
-            } else {
-                res.status(404).json({ message: "Usuario o contraseña incorrectos" });
             }
         })
         .catch(error => res.status(400).send(error));
@@ -120,7 +118,7 @@ router.get('/Allseries/json', function (req, res, next) {
 router.get('/findById/:id/json', function (req, res, next) {
     let id = parseInt(req.params.id);
 
-    Serie.findAll({
+    Serie.findOne({
         attributes: {
             exclude: ["updatedAt", "createdAt"]
         },
@@ -130,15 +128,16 @@ router.get('/findById/:id/json', function (req, res, next) {
             through: { attributes: [] }
         }],
         where: {
-            [Op.and]: [
-                { id: id }
-            ]
+            id: id
         }
     })
-        .then(series => {
-            res.json(series);
-        })
-        .catch(error => res.status(400).send(error))
+    .then(serie => {
+        if (!serie) {
+            return res.status(404).json({ message: "Serie not found" });
+        }
+        res.json(serie);
+    })
+    .catch(error => res.status(400).send(error));
 });
 
 // Configurar el directorio de imágenes
@@ -197,6 +196,22 @@ router.post('/NuevaSerie', function (req, res, next) {
     });
 });
 
+router.post('/NuevaSerie2', function (req, res, next) {
+    let { nombre, descripcion, rating, imagen} = req.body;
+
+    Serie.create({
+        nombre: nombre,
+        descripcion: descripcion,
+        rating:  parseFloat(rating),
+        imagen: imagen,
+        createdAt: new Date(),
+        updatedAt: new Date()
+    })
+        .then(serie => {
+            res.json(serie);
+        })
+        .catch(error => res.status(400).send(error))
+});
 
 //Actualizar SERIE
 router.put('/ActualizarSerie', function (req, res, next) {
@@ -275,6 +290,31 @@ router.put('/ActualizarSerie', function (req, res, next) {
         })
         .catch(error => res.status(400).send(error));
     });
+});
+
+
+//PUT
+router.put('/update', function (req, res, next) {
+    let {id, nombre, descripcion, rating, imagen} = req.body;
+
+    Serie.update({
+        id: id,
+        nombre: nombre,
+        descripcion: descripcion,
+        rating: rating,
+        imagen: imagen,
+        createdAt: new Date(),
+        updatedAt: new Date()
+    },
+        {
+            where: {
+                id: parseInt(id)
+            }
+        })
+        .then(respuesta => {
+            res.json(respuesta);
+        })
+        .catch(error => res.status(400).send(error))
 });
 
 
